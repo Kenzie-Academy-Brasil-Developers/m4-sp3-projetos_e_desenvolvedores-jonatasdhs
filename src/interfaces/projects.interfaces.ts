@@ -16,3 +16,4 @@ export interface IProjects extends IProjectsRequest {
 export type ProjectsResult = QueryResult<IProjects>
 export type RequiredProjectKeys = 'name' | 'description' | 'estimatedTime' | 'repository' | 'startDate' | 'endDate' | 'developerId'
 export type RequiredTechKeys = 'name'
+export type RequiredTechnologies = 'JavaScript' | 'Python' | 'React' | 'Express.js' | 'HTML' | 'CSS' | 'Django' | 'PostgreSQL' | 'MongoDB'

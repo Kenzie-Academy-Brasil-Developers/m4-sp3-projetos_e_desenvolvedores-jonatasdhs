@@ -1,8 +1,9 @@
 import { query, Request, Response } from "express"
 import { QueryConfig, QueryResult } from "pg"
 import format from "pg-format"
-import {client} from '../database/config'
-import { IProjectsRequest, ProjectsResult } from "../interfaces/projects.interfaces"
+
+import { client } from '../database/config'
+import { IProjectsRequest, ProjectsResult, RequiredTechnologies } from "../interfaces/projects.interfaces"
 
 export const createProject = async (req: Request, res: Response): Promise<Response> => {
     const projectData: IProjectsRequest = req.body
@@ -144,6 +145,7 @@ export const createTechnologies = async (req: Request, res: Response): Promise<R
 export const deleteProjectTechnology = async (req: Request, res: Response): Promise<Response> => {
     const id: number = parseInt(req.params.id)
     const name: string = req.params.name
+    const requiredTechnologies: Array<RequiredTechnologies> = ['JavaScript', 'CSS', 'Django', 'Express.js', 'HTML', 'MongoDB', 'PostgreSQL', 'Python', 'React']
 
     let queryString: string = `
         SELECT 
@@ -151,18 +153,18 @@ export const deleteProjectTechnology = async (req: Request, res: Response): Prom
         FROM 
             technologies
         WHERE
-            name = $1
+            name = $1;
     `
 
     let queryConfig: QueryConfig = {
         text: queryString,
         values: [name]
     }
-
+    
     const queryResultTechnology = await client.query(queryConfig)
     
-    if(queryResultTechnology.rowCount === 0){
-        return res.status(404).json({message: 'Technology not supported.'})
+    if(queryResultTechnology.rowCount === 0) {
+        return res.status(404).json({message: 'Technology not supported.', options: [requiredTechnologies]})
     }   
 
     queryString = `
@@ -170,7 +172,7 @@ export const deleteProjectTechnology = async (req: Request, res: Response): Prom
             projects_technologies
         WHERE
             "projectId" = $1
-        AND
+        OR
             "technologyId" = $2;
     `
 
@@ -178,7 +180,12 @@ export const deleteProjectTechnology = async (req: Request, res: Response): Prom
         text:queryString,
         values: [id, queryResultTechnology.rows[0].id]
     }
-
-    await client.query(queryConfig)
+    
+    
+    const resultDelete = await client.query(queryConfig)
+    if(resultDelete.rowCount === 0) {
+        return res.status(404).json({message: `Technology '${name}' not found on this Project.`})
+    }
+    
     return res.status(204).send()
 }
