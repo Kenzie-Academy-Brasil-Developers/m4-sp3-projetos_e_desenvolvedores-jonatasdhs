@@ -18,3 +18,4 @@ export interface IDevInfoRequest {
 export type DevelopersResult = QueryResult<IDevelopers>
 export type ListDeveloperRequiredKeys = 'name' | 'email'
 export type ListInfosRequiredKeys = 'developerSince' | 'preferredOS'
+export type ListRequiredOS = 'Windows' | 'MacOS' | 'Linux'

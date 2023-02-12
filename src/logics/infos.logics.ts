@@ -3,11 +3,12 @@ import { QueryConfig, QueryResult } from "pg";
 import format from 'pg-format';
 
 import { client } from "../database/config";
-import { DevelopersResult, IDeveloperRequest, IDevelopers, IDevInfoRequest } from "../interfaces/developers.interfaces";
+import { DevelopersResult, IDeveloperRequest, IDevelopers, IDevInfoRequest, ListRequiredOS } from "../interfaces/developers.interfaces";
 
 export const createDeveloperInfo = async (req: Request, res: Response): Promise<Response> => {
     const {developerSince, preferredOS}: IDevInfoRequest = req.body 
     const id: number = parseInt(req.params.id)
+    const requiredOS: Array<ListRequiredOS> = ["Linux", "MacOS", "Windows"]
 
     let queryString: string = `
         INSERT INTO
@@ -22,26 +23,29 @@ export const createDeveloperInfo = async (req: Request, res: Response): Promise<
         text: queryString,
         values: [developerSince, preferredOS]
     }
-
-    const queryResultInfos = await client.query(queryConfig)
-
-    queryString = `
-        UPDATE 
-            developers
-        SET
-            "developerInfoId" = $1
-        WHERE
-            id = $2
-    `
-
-    queryConfig = {
-        text: queryString,
-        values: [queryResultInfos.rows[0].id, id]
+    try {
+        const queryResultInfos = await client.query(queryConfig)
+    
+        queryString = `
+            UPDATE 
+                developers
+            SET
+                "developerInfoId" = $1
+            WHERE
+                id = $2
+        `
+    
+        queryConfig = {
+            text: queryString,
+            values: [queryResultInfos.rows[0].id, id]
+        }
+    
+        await client.query(queryConfig)
+    
+        return res.status(201).json(queryResultInfos.rows[0])
+    } catch(error: any) {
+        return res.status(400).json({message: `Preferred OS not supported`, options: requiredOS})
     }
-
-    await client.query(queryConfig)
-
-    return res.status(201).json(queryResultInfos.rows[0])
 }
 
 export const updateDeveloperInfo = async (req: Request, res: Response): Promise<Response> => {
